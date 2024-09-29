@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?  @db.VarChar(255)
+  email         String   @unique @db.VarChar(255)
+  emailVerified DateTime?
+  image         String?  @db.VarChar(255)
+  // OAuth related fields
+  accounts      Account[]
+  sessions      Session[]
+  todos         Todo[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Todo {
+  id        String   @id @default(cuid())
+  title     String   @db.VarChar(255)
+  content   String?
+  completed Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id               String   @id @default(cuid())
+  userId           String
+  type             String
+  provider         String
+  providerAccountId String
+  refresh_token    String?  @db.Text
+  access_token     String?  @db.Text
+  expires_at       Int?
+  token_type       String?
+  scope            String?
+  id_token         String?  @db.Text // Modify this line
+  session_state    String?
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
